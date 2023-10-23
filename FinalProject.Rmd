@@ -1,6 +1,6 @@
 ---
 title: "Final Project"
-author: "Group 39"
+author: "Group 39: Aden Chan, Magnus Sun, Amy Yu"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
