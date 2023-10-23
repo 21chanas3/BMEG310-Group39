@@ -1,0 +1,64 @@
+---
+title: "Final Project"
+author: "Group 39"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(formatR)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
+```
+
+# Preliminary Data Analysis
+## Load Data
+```{r}
+library(tidyverse)
+
+#Skipping the first 4 schema columns
+clinical_dataset <- read_tsv(file = "data_clinical_patient.txt", skip = 4)
+mutation_dataset <- read_tsv(file = "data_mutations.txt")
+RNAseq <- read_csv(file = "RNAseq_PRAD.csv")
+
+```
+RNA Sequence file has loaded in with the patient ID as the column names and is not tidy, making it a tidy format.
+```{r}
+library(dplyr)
+RNAseq <- RNAseq |> pivot_longer(cols = !...1, names_to = "sample_id", values_to = "count") |> rename("gene_id" = "...1")
+```
+
+Create a patient_id row in the mutation and sequence datasets based on data
+```{r}
+mutation_dataset <- mutation_dataset |> mutate(patient_id = substr(Tumor_Sample_Barcode, 1, 12))
+RNAseq <- RNAseq |> mutate(patient_id = substr(sample_id, 1, 12))
+
+#Also rename the clinical row to match case
+clinical_dataset <- clinical_dataset |> rename("patient_id" = "PATIENT_ID")
+```
+
+
+```{r}
+## Count unique patients in clinical dataset
+clinical_patients <- clinical_dataset |> select(patient_id)
+clinical_patients |> nrow()
+
+## Count unique patients in mutation dataset
+mutation_patients <- mutation_dataset |> select(patient_id) |> unique()
+mutation_patients |> nrow()
+
+## Count unique patients in RNA dataset
+seq_patients <- RNAseq |> select(patient_id) |> unique()
+seq_patients |> nrow()
+
+```
+
+Get a list of patient_id's which are present in all three datasets
+```{r}
+full_data_patients <- intersect(clinical_patients, mutation_patients) |> intersect(seq_patients)
+full_data_patients |> nrow()
+```
+492 patients are present in all three datasets
+
+
