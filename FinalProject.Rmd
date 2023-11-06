@@ -56,9 +56,23 @@ seq_patients |> nrow()
 
 Get a list of patient_id's which are present in all three datasets
 ```{r}
-full_data_patients <- intersect(clinical_patients, mutation_patients) |> intersect(seq_patients)
-full_data_patients |> nrow()
+full_data_patient_ids <- intersect(clinical_patients, mutation_patients) |> intersect(seq_patients)
+full_data_patient_ids |> nrow()
 ```
 492 patients are present in all three datasets
 
+# Lab 9 Deliverables
 
+## Action 2
+```{r}
+patient_age_plot <- clinical_dataset |> 
+  filter(patient_id %in% full_data_patient_ids$patient_id) |> 
+  select(AGE) |>
+  ggplot() +
+  geom_boxplot(aes(y = AGE)) +
+  ylab("Age") +
+  ggtitle("Patient Age Boxplot")
+
+patient_age_plot
+  
+```
