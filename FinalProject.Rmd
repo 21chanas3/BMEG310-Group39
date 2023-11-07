@@ -76,3 +76,13 @@ patient_age_plot <- clinical_dataset |>
 patient_age_plot
   
 ```
+
+## Action 3
+```{r}
+nsvar <- mutation_dataset[which(mutation_dataset$Variant_Classification != "Silent"),]
+  
+counts <- table(nsvar$patient_id)
+        
+barplot(counts,xlab="Patients",)
+
+```
