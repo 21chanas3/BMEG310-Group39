@@ -1,5 +1,5 @@
 ---
-title: "Final Project"
+title: "Lab Deliverables"
 author: "Group 39: Aden Chan, Magnus Sun, Amy Yu"
 date: "`r Sys.Date()`"
 output: pdf_document
