@@ -1,0 +1,23 @@
+---
+title: "Differential Expression Analysis"
+author: "Group 39"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("DESeq2")
+
+library(DESeq2)
+library(tidyverse)
+```
+
+## Reading Data
+```{r}
+count_matrix <- read_csv(file = "RNAseq_PRAD.csv")
+patient_data <- read_tsv(file = "data_clinical_patient.txt", skip = 4)
+```
+
