@@ -1,6 +1,6 @@
 ---
 title: "Differential Expression Analysis"
-author: "Group 39"
+author: "Group 39 Amy"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---

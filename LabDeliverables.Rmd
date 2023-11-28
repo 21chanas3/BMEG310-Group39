@@ -86,3 +86,5 @@ counts <- table(nsvar$patient_id)
 barplot(counts,xlab="Patients",)
 
 ```
+
+test
