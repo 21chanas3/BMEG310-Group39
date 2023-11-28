@@ -18,6 +18,34 @@ library(tidyverse)
 ## Reading Data
 ```{r}
 count_matrix <- read_csv(file = "RNAseq_PRAD.csv")
+mutation_data <- read_tsv(file = "data_mutations.txt")
 patient_data <- read_tsv(file = "data_clinical_patient.txt", skip = 4)
 ```
+
+## Find Patients with Complete Data
+Get Patient ID in Mutation Data
+```{r}
+mutation_data <- mutation_data |> mutate(PATIENT_ID = substr(Tumor_Sample_Barcode, 1, 12))
+```
+
+Get Patient ID's from RNA Data
+```{r}
+RNA_ColNames <- count_matrix |> colnames() |> substr(1, 12)
+sub_intersect <- intersect(patient_data$PATIENT_ID, mutation_data$PATIENT_ID)
+main_intersect <- intersect(sub_intersect, RNA_ColNames)
+head(main_intersect)
+```
+
+```{r}
+test_matrix <- count_matrix[,!names(count_matrix) %in% RNA_ColNames]
+```
+
+
+
+
+
+
+
+
+
 
