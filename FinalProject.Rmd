@@ -93,7 +93,7 @@ TTN, TP53, MUC16, SPOP, SYNE1, FOXA1, KMT2D, KMT2C, OBSCN, and RYR2 are the top 
 
 ```{r}
 
-sample.name.ordered <- sample.name[order(sample.name$Freq), ]
+sample.name.ordered <- sample.name[order(-sample.name$Freq), ]
 ggplot(data= sample.name.ordered, aes(x=Var1, y=Freq))+
   geom_col()+
   scale_x_discrete(limits = sample.name.ordered$Var1) +
@@ -173,4 +173,28 @@ ggplot(data=hugo.ordered[1:10,], aes(x=Var1, y=Freq))+
   labs(y = "Frequency", x = "Top 10 Genes", title = "Frequency of Top 10 Genes")
 ```
 
+```{r}
+library(maftools)
+patient_data$Tumor_Sample_Barcode <- patient_data$PATIENT_ID
+laml = read.maf(maf = mutation_data, clinicalData = patient_data)
+```
+```{r}
+#Shows sample summary.
+getSampleSummary(laml)
+#Shows gene summary.
+getGeneSummary(laml)
+#shows clinical data associated with samples
+getClinicalData(laml)
+#Shows all fields in MAF
+getFields(laml)
+#Writes maf summary to an output file with basename laml.
+write.mafSummary(maf = laml, basename = 'laml')
+```
+```{r}
+plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
+```
+```{r}
+#oncoplot for top ten mutated genes.
+oncoplot(maf = laml, top = 10)
+```
 
