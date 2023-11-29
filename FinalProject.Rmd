@@ -40,12 +40,116 @@ head(main_intersect)
 test_matrix <- count_matrix[,!names(count_matrix) %in% RNA_ColNames]
 ```
 
+#Mutation Analysis
+
+##1 Visualize mutation summaries
+Find patients in mutation data that exists in all data sets.
+```{r}
+full_data_patient_ids <- intersect(patient_data$PATIENT_ID, mutation_data$PATIENT_ID) |>
+intersect(RNA_ColNames)
+mutation_intersect <- subset(mutation_data, PATIENT_ID %in% full_data_patient_ids)
+```
+
+```{r}
+hugo <- as.data.frame(table(mutation_intersect$Hugo_Symbol))
+var.class <- as.data.frame(table(mutation_intersect$Variant_Classification))
+ggplot(data=var.class, aes(x=Var1, y=Freq))+
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 45,hjust=1), plot.title = element_text(hjust=0.5)) +
+  labs(y = "Frequency", x = "Variant Classification", title = "Frequency vs. Variant Classfication")
+```
+Missense mutation has the highest frequency of variant classification among patients with prostate cancer, with silent mutation being second.
+
+```{r}
+var.class2 <- as.data.frame(table(mutation_intersect$VARIANT_CLASS))
+ggplot(data=var.class2, aes(x=Var1, y=Freq))+
+  geom_col(aes(fill=Var1)) +
+  theme(plot.title = element_text(hjust=0.5)) +
+  labs(y = "Frequency", x = "Variant Class", title = "Frequency vs. Variant Class")
+```
+SNV (single nucleotide variant) appears to be the most abundant variant class among patients with prostate cancer.
 
 
+```{r}
+var.type <- as.data.frame(table(mutation_intersect$Variant_Type))
+ggplot(data=var.type, aes(x=Var1, y=Freq))+
+  geom_col( aes(fill=Var1)) +
+  theme(plot.title = element_text(hjust=0.5)) +
+  labs(y = "Frequency", x = "Variant Type", title = "Frequency vs. Variant type")
+```
+SNP (single nucleotide polymorphism) appears to be the most abundant variant type among patients with prostate cancer.
 
+```{r}
+sample.name <- as.data.frame(table(mutation_intersect$PATIENT_ID))
 
+hugo.ordered <- hugo[order(-hugo$Freq),]
+ggplot(data=hugo.ordered[1:15,], aes(x=Var1, y=Freq))+
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 45,hjust=1), plot.title = element_text(hjust=0.5))+
+  scale_x_discrete(limits = hugo.ordered[1:15,]$Var1)+
+  labs(y = "Frequency", x = "Top 15 Hugo Symbols", title = "Frequency of Top 15 Hugo Symbols")
+```
+Generate oncoplot matrix:
+```{r}
+cnv_events = unique(mutation_intersect$Variant_Classification)
+oncomat = reshape2::dcast(
+  data = mutation_intersect,
+  formula = Hugo_Symbol ~ Tumor_Sample_Barcode,
+  fun.aggregate = function(x, cnv = cnv_events) {
+    x = as.character(x) # >= 2 same/distinct variant classification = Multi_Hit
+    xad = x[x %in% cnv]
+    xvc = x[!x %in% cnv]
+    
+    if (length(xvc) > 0) {
+      xvc = ifelse(test = length(xvc) > 1,
+                   yes = 'Multi_Hit',
+                   no = xvc)
+    }
+    
+    x = ifelse(
+      test = length(xad) > 0,
+      yes = paste(xad, xvc, sep = ';'),
+      no = xvc
+    )
+    x = gsub(pattern = ';$',
+             replacement = '',
+             x = x)
+    x = gsub(pattern = '^;',
+             replacement = '',
+             x = x)
+    return(x)
+  },
+  value.var = 'Variant_Classification',
+  fill = '',
+  drop = FALSE
+)
+```
 
+```{r}
+rownames(oncomat) = oncomat$Hugo_Symbol
+oncomat <- oncomat[,-1]
+oncomat.ordered <- oncomat[order(-hugo$Freq),]
+```
 
+```{r}
+mat <- oncomat.ordered
+mat[mat!=""]=1
+mat[mat==""]=0
+mat <- apply(mat, 2 ,as.numeric)
+mat <- as.matrix(mat)
+rownames(mat)  <-  row.names(oncomat.ordered)
+```
+
+```{r}
+library(pheatmap)
+reduce.mat <- mat[1:3,]
+res <- pheatmap(reduce.mat,
+         cluster_rows = F,
+         show_colnames=FALSE)
+```
+```{r}
+mutation_cluster <-  as.data.frame(cutree(res$tree_col, k = 2))
+```
 
 
 
