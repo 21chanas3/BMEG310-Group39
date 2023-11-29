@@ -173,20 +173,12 @@ ggplot(data=hugo.ordered[1:10,], aes(x=Var1, y=Freq))+
   labs(y = "Frequency", x = "Top 10 Genes", title = "Frequency of Top 10 Genes")
 ```
 
-```{r}
+```{r, results='hide'}
 library(maftools)
 patient_data$Tumor_Sample_Barcode <- patient_data$PATIENT_ID
 laml = read.maf(maf = mutation_data, clinicalData = patient_data)
 ```
 ```{r}
-#Shows sample summary.
-getSampleSummary(laml)
-#Shows gene summary.
-getGeneSummary(laml)
-#shows clinical data associated with samples
-getClinicalData(laml)
-#Shows all fields in MAF
-getFields(laml)
 #Writes maf summary to an output file with basename laml.
 write.mafSummary(maf = laml, basename = 'laml')
 ```
@@ -194,7 +186,7 @@ write.mafSummary(maf = laml, basename = 'laml')
 plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
 ```
 ```{r}
-#oncoplot for top ten mutated genes.
-oncoplot(maf = laml, top = 10)
+#oncoplot for top thirty mutated genes.
+oncoplot(maf = laml, top = 30)
 ```
 
