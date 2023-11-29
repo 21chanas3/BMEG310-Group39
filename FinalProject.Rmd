@@ -83,13 +83,26 @@ SNP (single nucleotide polymorphism) appears to be the most abundant variant typ
 sample.name <- as.data.frame(table(mutation_intersect$PATIENT_ID))
 
 hugo.ordered <- hugo[order(-hugo$Freq),]
-ggplot(data=hugo.ordered[1:15,], aes(x=Var1, y=Freq))+
+ggplot(data=hugo.ordered[1:10,], aes(x=Var1, y=Freq))+
   geom_col()+
   theme(axis.text.x = element_text(angle = 45,hjust=1), plot.title = element_text(hjust=0.5))+
-  scale_x_discrete(limits = hugo.ordered[1:15,]$Var1)+
-  labs(y = "Frequency", x = "Top 15 Hugo Symbols", title = "Frequency of Top 15 Hugo Symbols")
+  scale_x_discrete(limits = hugo.ordered[1:10,]$Var1)+
+  labs(y = "Frequency", x = "Top 10 Genes", title = "Frequency of Top 10 Genes")
 ```
-Generate oncoplot matrix:
+TTN, TP53, MUC16, SPOP, SYNE1, FOXA1, KMT2D, KMT2C, OBSCN, and RYR2 are the top 10 genes with highest frequency among prostate cancer patients.
+
+```{r}
+
+sample.name.ordered <- sample.name[order(sample.name$Freq), ]
+ggplot(data= sample.name.ordered, aes(x=Var1, y=Freq))+
+  geom_col()+
+  scale_x_discrete(limits = sample.name.ordered$Var1) +
+  labs(x = "Patients", y = "Number of Mutations", main = " Number of 
+                  Mutations per Prostate Cancer Patientes")
+
+```
+
+Generate oncomatrix:
 ```{r}
 cnv_events = unique(mutation_intersect$Variant_Classification)
 oncomat = reshape2::dcast(
@@ -142,7 +155,7 @@ rownames(mat)  <-  row.names(oncomat.ordered)
 
 ```{r}
 library(pheatmap)
-reduce.mat <- mat[1:3,]
+reduce.mat <- mat[1:10,]
 res <- pheatmap(reduce.mat,
          cluster_rows = F,
          show_colnames=FALSE)
@@ -151,5 +164,13 @@ res <- pheatmap(reduce.mat,
 mutation_cluster <-  as.data.frame(cutree(res$tree_col, k = 2))
 ```
 
+
+```{r}
+ggplot(data=hugo.ordered[1:10,], aes(x=Var1, y=Freq))+
+  geom_col()+
+  theme(axis.text.x = element_text(angle = 45,hjust=1), plot.title = element_text(hjust=0.5))+
+  scale_x_discrete(limits = hugo.ordered[1:10,]$Var1)+
+  labs(y = "Frequency", x = "Top 10 Genes", title = "Frequency of Top 10 Genes")
+```
 
 
