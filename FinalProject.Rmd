@@ -10,7 +10,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap)
 
 # BiocManager::install("DESeq2")
-# BiocManager::install("maftools")
+BiocManager::install("maftools")
 
 library(DESeq2)
 library(tidyverse)
@@ -89,15 +89,6 @@ oncomat = reshape2::dcast(
 ```
 
 ```{r}
-library(pheatmap)
-reduce.mat <- mat[1:10,]
-res <- pheatmap(reduce.mat,
-         cluster_rows = F,
-         show_colnames=FALSE)
-```
-
-
-```{r}
 rownames(oncomat) = oncomat$Hugo_Symbol
 oncomat <- oncomat[,-1]
 oncomat.ordered <- oncomat[order(-hugo$Freq),]
@@ -110,6 +101,14 @@ mat[mat==""]=0
 mat <- apply(mat, 2 ,as.numeric)
 mat <- as.matrix(mat)
 rownames(mat)  <-  row.names(oncomat.ordered)
+```
+
+```{r}
+library(pheatmap)
+reduce.mat <- mat[1:10,]
+res <- pheatmap(reduce.mat,
+         cluster_rows = F,
+         show_colnames=FALSE)
 ```
 
 ```{r}
@@ -143,7 +142,7 @@ mutation_data.filtered <- mutation_data |>
   filter(Variant_Classification != "Silent", Variant_Classification != "Missense_Mutation")
 
 hugo.ordered.filtered <- hugo.ordered |> 
-  filter(Var1 %in% mutation_data.filtered |> select(Hugo_Symbol) |> pull())
+  filter(Var1 %in% pull(select(mutation_data.filtered, Hugo_Symbol)))
 
 ```
 
