@@ -84,7 +84,7 @@ write.mafSummary(maf = laml.fil, basename = 'laml_fil')
 
 ```{r}
 plotmafSummary(maf = laml.fil, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
-oncoplot(maf = laml, top = 20)
+oncoplot(maf = laml.fil, top = 20)
 ```
 
 ```{r}
