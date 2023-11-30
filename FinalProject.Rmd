@@ -137,3 +137,18 @@ plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRU
 oncoplot(maf = laml, top = 30)
 ```
 
+## Filter Silent and Missense
+```{r}
+mutation_data.filtered <- mutation_data |> 
+  filter(Variant_Classification != "Silent", Variant_Classification != "Missense_Mutation")
+
+hugo.ordered.filtered <- hugo.ordered |> 
+  filter(Var1 %in% mutation_data.filtered |> select(Hugo_Symbol) |> pull())
+
+```
+
+
+
+
+
+
