@@ -9,8 +9,8 @@ output: pdf_document
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap)
 
-BiocManager::install("DESeq2")
-BiocManager::install("maftools")
+# BiocManager::install("DESeq2")
+# BiocManager::install("maftools")
 
 library(DESeq2)
 library(tidyverse)
@@ -51,57 +51,6 @@ intersect(RNA_ColNames)
 mutation_intersect <- subset(mutation_data, PATIENT_ID %in% full_data_patient_ids)
 ```
 
-```{r}
-hugo <- as.data.frame(table(mutation_intersect$Hugo_Symbol))
-var.class <- as.data.frame(table(mutation_intersect$Variant_Classification))
-ggplot(data=var.class, aes(x=Var1, y=Freq))+
-  geom_col()+
-  theme(axis.text.x = element_text(angle = 45,hjust=1), plot.title = element_text(hjust=0.5)) +
-  labs(y = "Frequency", x = "Variant Classification", title = "Frequency vs. Variant Classfication")
-```
-Missense mutation has the highest frequency of variant classification among patients with prostate cancer, with silent mutation being second.
-
-```{r}
-var.class2 <- as.data.frame(table(mutation_intersect$VARIANT_CLASS))
-ggplot(data=var.class2, aes(x=Var1, y=Freq))+
-  geom_col(aes(fill=Var1)) +
-  theme(plot.title = element_text(hjust=0.5)) +
-  labs(y = "Frequency", x = "Variant Class", title = "Frequency vs. Variant Class")
-```
-SNV (single nucleotide variant) appears to be the most abundant variant class among patients with prostate cancer.
-
-
-```{r}
-var.type <- as.data.frame(table(mutation_intersect$Variant_Type))
-ggplot(data=var.type, aes(x=Var1, y=Freq))+
-  geom_col( aes(fill=Var1)) +
-  theme(plot.title = element_text(hjust=0.5)) +
-  labs(y = "Frequency", x = "Variant Type", title = "Frequency vs. Variant type")
-```
-SNP (single nucleotide polymorphism) appears to be the most abundant variant type among patients with prostate cancer.
-
-```{r}
-sample.name <- as.data.frame(table(mutation_intersect$PATIENT_ID))
-
-hugo.ordered <- hugo[order(-hugo$Freq),]
-ggplot(data=hugo.ordered[1:10,], aes(x=Var1, y=Freq))+
-  geom_col()+
-  theme(axis.text.x = element_text(angle = 45,hjust=1), plot.title = element_text(hjust=0.5))+
-  scale_x_discrete(limits = hugo.ordered[1:10,]$Var1)+
-  labs(y = "Frequency", x = "Top 10 Genes", title = "Frequency of Top 10 Genes")
-```
-TTN, TP53, MUC16, SPOP, SYNE1, FOXA1, KMT2D, KMT2C, OBSCN, and RYR2 are the top 10 genes with highest frequency among prostate cancer patients.
-
-```{r}
-
-sample.name.ordered <- sample.name[order(-sample.name$Freq), ]
-ggplot(data= sample.name.ordered, aes(x=Var1, y=Freq))+
-  geom_col()+
-  scale_x_discrete(limits = sample.name.ordered$Var1) +
-  labs(x = "Patients", y = "Number of Mutations", main = " Number of 
-                  Mutations per Prostate Cancer Patientes")
-
-```
 
 Generate oncomatrix:
 ```{r}
@@ -140,6 +89,15 @@ oncomat = reshape2::dcast(
 ```
 
 ```{r}
+library(pheatmap)
+reduce.mat <- mat[1:10,]
+res <- pheatmap(reduce.mat,
+         cluster_rows = F,
+         show_colnames=FALSE)
+```
+
+
+```{r}
 rownames(oncomat) = oncomat$Hugo_Symbol
 oncomat <- oncomat[,-1]
 oncomat.ordered <- oncomat[order(-hugo$Freq),]
@@ -153,18 +111,6 @@ mat <- apply(mat, 2 ,as.numeric)
 mat <- as.matrix(mat)
 rownames(mat)  <-  row.names(oncomat.ordered)
 ```
-
-```{r}
-library(pheatmap)
-reduce.mat <- mat[1:10,]
-res <- pheatmap(reduce.mat,
-         cluster_rows = F,
-         show_colnames=FALSE)
-```
-```{r}
-mutation_cluster <-  as.data.frame(cutree(res$tree_col, k = 2))
-```
-
 
 ```{r}
 ggplot(data=hugo.ordered[1:10,], aes(x=Var1, y=Freq))+
