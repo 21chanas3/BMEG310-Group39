@@ -49,14 +49,52 @@ Find patients in mutation data that exists in all data sets.
 full_data_patient_ids <- intersect(patient_data$PATIENT_ID, mutation_data$PATIENT_ID) |>
 intersect(RNA_ColNames)
 mutation_intersect <- subset(mutation_data, PATIENT_ID %in% full_data_patient_ids)
+patient_intersect <- subset(patient_data, PATIENT_ID %in% full_data_patient_ids)
+```
+
+```{r, results='hide'}
+library(maftools)
+patient_intersect$Tumor_Sample_Barcode <- patient_intersect$PATIENT_ID
+laml = read.maf(maf = mutation_intersect, clinicalData = patient_intersect)
+```
+```{r}
+#Writes maf summary to an output file with basename laml.
+write.mafSummary(maf = laml, basename = 'laml')
+```
+```{r}
+plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
+```
+```{r}
+#oncoplot for top twenty mutated genes.
+oncoplot(maf = laml, top = 20)
+```
+
+## Filter Silent and Missense and Regenerate MAF Summary
+```{r}
+mutation_filtered <- subset(mutation_intersect, Variant_Classification != "Silent")
+mutation_filtered <- subset(mutation_filtered, Variant_Classification != "Missense_Mutation")
 ```
 
 
-Generate oncomatrix:
+```{r, results='hide'}
+laml.fil = read.maf(maf = mutation_filtered, clinicalData = patient_intersect)
+write.mafSummary(maf = laml.fil, basename = 'laml_fil')
+```
+
+
 ```{r}
-cnv_events = unique(mutation_intersect$Variant_Classification)
+plotmafSummary(maf = laml.fil, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
+oncoplot(maf = laml, top = 20)
+```
+
+```{r}
+hugo <- as.data.frame(table(mutation_filtered$Hugo_Symbol))
+```
+```{r}
+##Create the onco matrix
+cnv_events = unique(mutation_filtered$Variant_Classification)
 oncomat = reshape2::dcast(
-  data = mutation_intersect,
+  data = mutation_filtered,
   formula = Hugo_Symbol ~ Tumor_Sample_Barcode,
   fun.aggregate = function(x, cnv = cnv_events) {
     x = as.character(x) # >= 2 same/distinct variant classification = Multi_Hit
@@ -88,13 +126,11 @@ oncomat = reshape2::dcast(
 )
 ```
 
+
 ```{r}
 rownames(oncomat) = oncomat$Hugo_Symbol
 oncomat <- oncomat[,-1]
 oncomat.ordered <- oncomat[order(-hugo$Freq),]
-```
-
-```{r}
 mat <- oncomat.ordered
 mat[mat!=""]=1
 mat[mat==""]=0
@@ -104,49 +140,11 @@ rownames(mat)  <-  row.names(oncomat.ordered)
 ```
 
 ```{r}
-library(pheatmap)
 reduce.mat <- mat[1:10,]
 res <- pheatmap(reduce.mat,
          cluster_rows = F,
          show_colnames=FALSE)
 ```
-
-```{r}
-ggplot(data=hugo.ordered[1:10,], aes(x=Var1, y=Freq))+
-  geom_col()+
-  theme(axis.text.x = element_text(angle = 45,hjust=1), plot.title = element_text(hjust=0.5))+
-  scale_x_discrete(limits = hugo.ordered[1:10,]$Var1)+
-  labs(y = "Frequency", x = "Top 10 Genes", title = "Frequency of Top 10 Genes")
-```
-
-```{r, results='hide'}
-library(maftools)
-patient_data$Tumor_Sample_Barcode <- patient_data$PATIENT_ID
-laml = read.maf(maf = mutation_data, clinicalData = patient_data)
-```
-```{r}
-#Writes maf summary to an output file with basename laml.
-write.mafSummary(maf = laml, basename = 'laml')
-```
-```{r}
-plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
-```
-```{r}
-#oncoplot for top thirty mutated genes.
-oncoplot(maf = laml, top = 30)
-```
-
-## Filter Silent and Missense
-```{r}
-mutation_data.filtered <- mutation_data |> 
-  filter(Variant_Classification != "Silent", Variant_Classification != "Missense_Mutation")
-
-hugo.ordered.filtered <- hugo.ordered |> 
-  filter(Var1 %in% pull(select(mutation_data.filtered, Hugo_Symbol)))
-
-```
-
-
 
 
 
