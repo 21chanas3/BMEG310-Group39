@@ -6,10 +6,11 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap)
 
 BiocManager::install("DESeq2")
+BiocManager::install("maftools")
 
 library(DESeq2)
 library(tidyverse)
