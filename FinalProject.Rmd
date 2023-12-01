@@ -145,7 +145,11 @@ res <- pheatmap(reduce.mat,
          cluster_rows = F,
          show_colnames=FALSE)
 ```
+# mutation to expression; then expression to mutation
 
+```{r}
+
+```
 
 
 
