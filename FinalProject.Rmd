@@ -145,11 +145,20 @@ res <- pheatmap(reduce.mat,
          cluster_rows = F,
          show_colnames=FALSE)
 ```
-# mutation to expression; then expression to mutation
 
+## Classify Patients
 ```{r}
+hugo.ordered <- hugo |> arrange(desc(Freq)) |> head(n = 10)
 
+patient.mutation.data <- mutation_data |> 
+  select(Tumor_Sample_Barcode, Hugo_Symbol) |>
+  filter(Hugo_Symbol %in% pull(select(hugo.ordered, Var1))) |>
+  mutate(PATIENT_ID = substr(Tumor_Sample_Barcode, 1, 12)) |>
+  select(PATIENT_ID, Hugo_Symbol) |>
+  merge(patient_data[, c("PATIENT_ID", "OS_MONTHS", "DSS_MONTHS")], by = "PATIENT_ID") |>
+  distinct()
 ```
+
 
 
 
