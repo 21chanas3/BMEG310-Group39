@@ -7,7 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap, survminer)
+pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap, survminer, corrplot)
 
 # BiocManager::install("DESeq2")
 BiocManager::install("maftools")
@@ -175,8 +175,34 @@ ggsurvplot(sa.plot,
            linetype = "strata",
            surv.median.line = "hv")
 ```
+
 ```{r}
 survdiff(formula = Surv(DSS_MONTHS, DSS_STATUS) ~ Hugo_Symbol, data = patient.mutation.data)
+```
+
+## Find Correlation Matrix
+```{r}
+library(corrplot)
+library(broom)
+```
+
+```{r}
+gene.corr.matrix <- patient.mutation.data |>
+  mutate(present = 1) |>
+  pivot_wider(names_from = Hugo_Symbol, values_from = present, values_fill = 0) |>
+  select(-PATIENT_ID, -DSS_STATUS) |>
+  cor()
+
+
+corrplot(gene.corr.matrix, type = "upper", diag = F)
+```
+```{r}
+genes.by.corr <- gene.corr.matrix[,"DSS_MONTHS"] |>
+    tidy() |>
+    filter(names != "DSS_MONTHS") |>
+    arrange(desc(x))
+
+genes.by.corr
 ```
 
 
