@@ -7,7 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap)
+pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap, survminer)
 
 # BiocManager::install("DESeq2")
 BiocManager::install("maftools")
@@ -155,9 +155,35 @@ patient.mutation.data <- mutation_data |>
   filter(Hugo_Symbol %in% pull(select(hugo.ordered, Var1))) |>
   mutate(PATIENT_ID = substr(Tumor_Sample_Barcode, 1, 12)) |>
   select(PATIENT_ID, Hugo_Symbol) |>
-  merge(patient_data[, c("PATIENT_ID", "OS_MONTHS", "DSS_MONTHS")], by = "PATIENT_ID") |>
+  merge(patient_data[, c("PATIENT_ID", "DSS_STATUS","DSS_MONTHS")], by = "PATIENT_ID") |>
+  drop_na() |>
+  mutate(DSS_STATUS = as.numeric(substr(DSS_STATUS, 1, 1))) |>
   distinct()
 ```
+
+## Draw Survival Curves
+```{r, fig.height = 10}
+library(survminer)
+library(survival)
+
+sa.plot <- survfit(Surv(DSS_MONTHS, DSS_STATUS) ~  Hugo_Symbol, data = patient.mutation.data)
+
+ggsurvplot(sa.plot,
+           pval = T, conf.int = T,
+           risk.table = T,
+           risk.table.col = "strata",
+           linetype = "strata",
+           surv.median.line = "hv")
+```
+```{r}
+survdiff(formula = Surv(DSS_MONTHS, DSS_STATUS) ~ Hugo_Symbol, data = patient.mutation.data)
+```
+
+
+
+
+
+
 
 
 
