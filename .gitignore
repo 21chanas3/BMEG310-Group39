@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+laml_maftools.maf
+laml_geneSummary.txt
+laml_sampleSummary.txt
+laml_summary.txt
