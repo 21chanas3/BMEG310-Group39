@@ -1,0 +1,55 @@
+---
+title: "DataProcessing"
+author: "Magnus Sun"
+date: "2023-12-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load data
+RNA_count <- read_csv(file = "RNAseq_PRAD.csv")
+mutation_data <- read_tsv(file = "data_mutations.txt")
+clinical_data <- read_tsv(file = "data_clinical_patient.txt", skip = 4)
+```
+
+
+```{r}
+#format the patient id
+mutation_data <- mutation_data |> mutate(PATIENT_ID = substr(Tumor_Sample_Barcode, 1, 12))
+colnames(RNA_count) <- colnames(RNA_count)|> substr(1, 12)
+RNA_ColNames <- RNA_count |> colnames() |> substr(1, 12)
+```
+
+```{r}
+#find all intersected patient
+
+sub_intersect <- intersect(clinical_data$PATIENT_ID, mutation_data$PATIENT_ID)
+main_intersect <- intersect(sub_intersect, RNA_ColNames)
+
+```
+```{r}
+#filter for intersected data
+mutation_data <- filter(mutation_data,PATIENT_ID %in% main_intersect)
+clinical_data <- filter(clinical_data,PATIENT_ID %in% main_intersect)
+genename <- RNA_count[,1]|> unlist()|> substr(1,15)
+
+
+
+```
+
+```{r}
+#BiocManager::install("org.Hs.eg.db")
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+
+RNA_count$genename =   mapIds(org.Hs.eg.db,
+                    keys=genename,
+                    column="SYMBOL",
+                    keytype="ENSEMBL",
+                    multiVals="first")
+```
+

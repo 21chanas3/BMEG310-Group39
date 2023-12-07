@@ -10,7 +10,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(BiocManager, tidyverse, reshape2, pheatmap)
 
 # BiocManager::install("DESeq2")
-BiocManager::install("maftools")
+# BiocManager::install("maftools")
 
 library(DESeq2)
 library(tidyverse)
@@ -50,6 +50,8 @@ full_data_patient_ids <- intersect(patient_data$PATIENT_ID, mutation_data$PATIEN
 intersect(RNA_ColNames)
 mutation_intersect <- subset(mutation_data, PATIENT_ID %in% full_data_patient_ids)
 patient_intersect <- subset(patient_data, PATIENT_ID %in% full_data_patient_ids)
+colnames(count_matrix) <- colnames(count_matrix)|> substr(1, 12)
+count_matrix_intersect <- count_matrix[,full_data_patient_ids]
 ```
 
 ```{r, results='hide'}
@@ -61,6 +63,7 @@ laml = read.maf(maf = mutation_intersect, clinicalData = patient_intersect)
 #Writes maf summary to an output file with basename laml.
 write.mafSummary(maf = laml, basename = 'laml')
 ```
+
 ```{r}
 plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
 ```
@@ -73,6 +76,7 @@ oncoplot(maf = laml, top = 20)
 ```{r}
 mutation_filtered <- subset(mutation_intersect, Variant_Classification != "Silent")
 mutation_filtered <- subset(mutation_filtered, Variant_Classification != "Missense_Mutation")
+mutation_filtered <- subset(mutation_intersect,IMPACT =="HIGH")
 ```
 
 
@@ -159,6 +163,30 @@ patient.mutation.data <- mutation_data |>
   distinct()
 ```
 
+## Survival Analysis
+```{r}
+
+```
 
 
+
+## Expression Analysis
+```{r}
+countData <- count_matrix_intersect #just to keep the same variable name in the tutorial
+
+
+head(countData)
+```
+## pca plot
+```{r}
+# pca_res <- prcomp(t(countData), scale. = TRUE)
+# score <- pca_res$x
+# 
+# score = as.data.frame(score)
+# score$color <- as.factor(colData$condition)
+# 
+# 
+# ggplot(score, aes(x=PC1, y=PC2,  color=color)) + 
+#   geom_point(size = 4)
+```
 
