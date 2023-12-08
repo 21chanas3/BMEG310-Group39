@@ -182,13 +182,13 @@ hugo.ordered <- rownames(reduce.mat)
 
 survdata <- patient_intersect |> filter(PATIENT_ID %in% rownames(cluster))
 
-# survdata <- survdata[,c("PATIENT_ID","OS_MONTHS","DSS_MONTHS","OS_STATUS","DAYS_LAST_FOLLOWUP","PFS_STATUS")]
+# survdata <- survdata[,c("PATIENT_ID","OS_MONTHS","DSS_MONTHS","OS_STATUS","DAYS_LAST_FOLLOWUP","PFS_STATUS",)]
 
 
 survdata$Group <- cluster[,1]
 survdata$deceased <- grepl("1",survdata$PFS_STATUS,fixed=TRUE)
 survdata$overall_survival <- ifelse(survdata$deceased,
-                                    survdata$OS_MONTHS*30,
+                                    survdata$PFS_MONTHS*30,
                                     survdata$DAYS_LAST_FOLLOWUP)
 # survdata$overall_survival <- survdata$OS_MONTHS
 ```
@@ -296,10 +296,12 @@ head(resSig$symbol,10)
 #Select top 10 downregulated and top 10 upregulated genes
 genesup <- order(resSig$log2FoldChange,decreasing = TRUE)[1:10]
 genesdown <- order(resSig$log2FoldChange,decreasing = F)[1:10]
-
+genesSig
 tp20udgenes <- append(genesup,genesdown)
-
+resSig[tp20udgenes,]
 ```
+
+
 ```{r}
 vsd <- vst(dds)
 ```
@@ -315,7 +317,28 @@ colnames(sampleMatrix) = colnames(countData)
 
 Deseqres <- pheatmap(sampleMatrix , cluster_rows=FALSE, show_rownames=TRUE,
          cluster_cols=TRUE, annotation_col=annot_col,clustering_method = "ward.D")
+
+pheatmap(sampleMatrix , cluster_rows=FALSE, show_rownames=TRUE,
+         cluster_cols=TRUE, annotation_col=annot_col,clustering_method = "ward.D", show_colnames =F ,labels_row = resSig[tp20udgenes,]$symbol)
 ```
+
+```{r}
+# annot_col = data.frame(colData$condition)
+# row.names(annot_col) <- rownames(colData)
+# 
+# sampleMatrix <- assay(vsd)[tp20udgenes,]
+# 
+# rownames(sampleMatrix) = rownames(countData[tp20udgenes,])
+# colnames(sampleMatrix) = colnames(countData)
+# 
+# Deseqres <- pheatmap(sampleMatrix , cluster_rows=FALSE, show_rownames=TRUE,
+#          cluster_cols=TRUE, annotation_col=annot_col,clustering_method = "ward.D")
+# 
+# pheatmap(sampleMatrix , cluster_rows=FALSE, show_rownames=TRUE,
+#          cluster_cols=TRUE, annotation_col=annot_col,clustering_method = "ward.D", show_colnames =F ,labels_row = resSig[tp20udgenes,]$symbol)
+```
+
+
 ```{r}
 DEcluster <- as.data.frame(cutree(Deseqres$tree_col, k = 2)) 
 
@@ -352,21 +375,31 @@ head(kegg.sets.hs, 3)
 ```
 
 ```{r}
-foldchanges = res_temp$log2FoldChange
-names(foldchanges) = res_temp$entrez
+foldchanges = resSig$log2FoldChange
+names(foldchanges) = resSig$entrez
 head(foldchanges)
 ```
 
 ```{r}
 keggres = gage(foldchanges, gsets=kegg.sets.hs)
 attributes(keggres)
-head(keggres$less)
 
-## Focus on top 5 upregulated pathways here for demo purposes only
-keggrespathways <- rownames(keggres$greater)[1:5]
-
+## Focus on top 10 upregulated and downregulated pathways
+keggrespathwaysup <- rownames(keggres$greater)[1:10]
+keggrespathwaysdown <- rownames(keggres$less)[1:10]
 # Extract the 8 character long IDs part of each string
-keggresids = substr(keggrespathways, start=1, stop=8)
-keggresids
+keggresidsup = substr(keggrespathwaysup, start=1, stop=8)
+keggresidsdown = substr(keggrespathwaysdown, start=1, stop=8)
+keggresidsup
+keggresidsdown
+```
+```{r}
+pathview(gene.data=foldchanges, pathway.id=keggresidsup, species="hsa")
+
+
+```
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id=keggresidsdown, species="hsa")
 ```
 
