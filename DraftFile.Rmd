@@ -42,45 +42,42 @@ RNA_ColNames <- count_matrix |> colnames() |> substr(1, 12)
 sub_intersect <- intersect(patient_data$PATIENT_ID, mutation_data$PATIENT_ID)
 main_intersect <- intersect(sub_intersect, RNA_ColNames)
 head(main_intersect)
+rm(RNA_ColNames, sub_intersect)
+```
+```{r}
+patient_data <- patient_data |>
+  filter(PATIENT_ID %in% main_intersect);
+mutation_data <- mutation_data |>
+  filter(PATIENT_ID %in% main_intersect);
+
+ensembl_ids <- count_matrix |> select(...1) |> pull()
+keep_cols <- count_matrix |> colnames()
+keep_cols <- which(substr(keep_cols, 1, 12) %in% main_intersect)
+count_matrix <- count_matrix[, keep_cols]
+rownames(count_matrix) <- ensembl_ids
+rm(ensembl_ids, keep_cols)
 ```
 
-```{r}
-test_matrix <- count_matrix[,!names(count_matrix) %in% RNA_ColNames]
-```
 
 #Mutation Analysis
 
 ##1 Visualize mutation summaries
 Find patients in mutation data that exists in all data sets.
 ```{r}
-full_data_patient_ids <- intersect(patient_data$PATIENT_ID, mutation_data$PATIENT_ID) |>
-intersect(RNA_ColNames)
-mutation_intersect <- subset(mutation_data, PATIENT_ID %in% full_data_patient_ids)
-patient_intersect <- subset(patient_data, PATIENT_ID %in% full_data_patient_ids)
-colnames(count_matrix) <- colnames(count_matrix)|> substr(1, 12)
-count_matrix$...1 <- count_matrix$...1 |> substr(1,15)
+temp_mut_data <- mutation_data |>
+  mutate(Tumor_Sample_Barcode = substr(Tumor_Sample_Barcode, 1, 12))
 
-count_matrix <- count_matrix[!duplicated(count_matrix$...1),]
-count_matrix_gene <- count_matrix$...1 
-count_matrix_intersect <- count_matrix[,full_data_patient_ids]
+patient_data <- patient_data |>
+  mutate(Tumor_Sample_Barcode = PATIENT_ID)
 
-rownames(count_matrix_intersect) <- count_matrix_gene
-```
-
-```{r, results='hide'}
-library(maftools)
-patient_intersect$Tumor_Sample_Barcode <- patient_intersect$PATIENT_ID
-laml = read.maf(maf = mutation_intersect, clinicalData = patient_intersect)
-```
-
-```{r}
-#Writes maf summary to an output file with basename laml.
-write.mafSummary(maf = laml, basename = 'laml')
+laml = read.maf(maf = temp_mut_data, clinicalData = patient_data)
+rm(temp_mut_data)
 ```
 
 ```{r}
 plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE, titvRaw = FALSE)
 ```
+
 ```{r}
 #oncoplot for top twenty mutated genes.
 oncoplot(maf = laml, top = 20)
@@ -262,6 +259,90 @@ res_temp <- res1
 res_temp <- res_temp[order(res_temp$pvalue),]
 head(res_temp,10)
 ```
+## Get top 10 genes from each side
+```{r}
+#Segment plot into two df
+res_df <- as.data.frame(res_temp) |> drop_na()
+res_df.lower <- res_df |> filter(log2FoldChange < 0)
+res_df.upper <- res_df |> filter(log2FoldChange >= 0)
+
+res_df.lower <- res_df.lower |> 
+  mutate(impact_score = abs(log2FoldChange) * -log(pvalue)) |>
+  arrange(desc(impact_score)) |>
+  mutate(top = ifelse(row_number() <= 20, "Yes", "No"))
+
+res_df.upper <- res_df.upper |> 
+  mutate(impact_score = abs(log2FoldChange) * -log(pvalue)) |>
+  arrange(desc(impact_score)) |>
+  mutate(top = ifelse(row_number() <= 20, "Yes", "No"))
+
+res_df <- rbind(res_df.upper, res_df.lower)
+
+plot(res_df$log2FoldChange, -log(res_df$pvalue), col = factor(res_df$top))
+
+top_df <- res_df |> filter(top == "Yes")
+top_df
+```
+
+
+
+
+
+## adding gene name data (code from r-bloggers)
+```{r}
+entrez.symbols = mapIds(org.Hs.eg.db,
+                     keys=row.names(res_temp), 
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+fully.formed.genes <- entrez.symbols[which(!is.na(entrez.symbols))]
+res_formed <- res_temp[names(fully.formed.genes), ]
+rownames(res_formed) <- fully.formed.genes
+head(res_formed, 10)
+```
+
+## pathway analysis (code adapted from r-bloggers)
+```{r}
+library(pathview)
+library(gage)
+library(gageData)
+data(kegg.sets.hs)
+data(sigmet.idx.hs)
+kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
+```
+```{r}
+foldchanges = res_formed$log2FoldChange
+names(foldchanges) = res_formed$entrez
+head(foldchanges)
+```
+```{r}
+
+keggres = gage(foldchanges, gsets=kegg.sets.hs, same.dir=TRUE)
+
+lapply(keggres, head)
+```
+Pull top 5 pathways
+```{r}
+keggrespathways = data.frame(id=rownames(keggres$greater), keggres$greater) %>% 
+  as_tibble() %>% 
+  filter(row_number()<=5) %>% 
+  .$id %>% 
+  as.character()
+keggrespathways
+```
+```{r}
+keggresids = substr(keggrespathways, start=1, stop=8)
+keggresids
+```
+```{r}
+# Define plotting function for applying later
+plot_pathway = function(pid) pathview(gene.data=foldchanges, pathway.id=pid, species="hsa", new.signature=FALSE)
+
+# plot multiple pathways (plots saved to disk and returns a throwaway list object)
+tmp = sapply(keggresids, function(pid) pathview(gene.data=foldchanges, pathway.id=pid, species="hsa"))
+```
+
 
 
 ## pca plot
