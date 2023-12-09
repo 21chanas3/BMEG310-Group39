@@ -89,7 +89,6 @@ oncoplot(maf = laml, top = 20)
 ## Filter Silent and Missense and Regenerate MAF Summary
 ```{r}
 mutation_filtered <- subset(mutation_intersect, Variant_Classification != "Silent")
-mutation_filtered <- subset(mutation_filtered, Variant_Classification != "Missense_Mutation")
 mutation_filtered <- subset(mutation_filtered,IMPACT =="HIGH")
 
 count_matrix_filtered <- count_matrix_intersect[,unique(mutation_filtered$PATIENT_ID)]
@@ -200,7 +199,7 @@ library(TCGAbiolinks)
 library(survminer)
 library(SummarizedExperiment)
 fit <- survfit(Surv(overall_survival,deceased)~Group,data=survdata)
-ggsurvplot(fit,data=survdata,pval=T)
+ggsurvplot(fit,data=survdata,pval=T,title="PFS Rate")
 ```
 
 
@@ -247,19 +246,12 @@ library(DESeq2)
 dds = DESeqDataSetFromMatrix(countData=countData,
                               colData=colData,
                               design=~condition)
+# dds$condition <- as.factor(dds$condition)
 dds = DESeq(dds)
 
 res1 <- results(dds)
 ```
 
-```{r}
-res05 <- results(dds,alpha=0.05)
-summary(res05)
-table(res05$padj<0.05)
-res05 <- res05[order(res05$pvalue),]
-head(res05,10)
-
-```
 
 
 ```{r}
@@ -296,7 +288,6 @@ head(resSig$symbol,10)
 #Select top 10 downregulated and top 10 upregulated genes
 genesup <- order(resSig$log2FoldChange,decreasing = TRUE)[1:10]
 genesdown <- order(resSig$log2FoldChange,decreasing = F)[1:10]
-genesSig
 tp20udgenes <- append(genesup,genesdown)
 resSig[tp20udgenes,]
 ```
@@ -319,7 +310,7 @@ Deseqres <- pheatmap(sampleMatrix , cluster_rows=FALSE, show_rownames=TRUE,
          cluster_cols=TRUE, annotation_col=annot_col,clustering_method = "ward.D")
 
 pheatmap(sampleMatrix , cluster_rows=FALSE, show_rownames=TRUE,
-         cluster_cols=TRUE, annotation_col=annot_col,clustering_method = "ward.D", show_colnames =F ,labels_row = resSig[tp20udgenes,]$symbol)
+         cluster_cols=TRUE, annotation_col=annot_col,clustering_method = "ward.D", show_colnames =F ,labels_row = rownames(resSig[tp20udgenes,]))
 ```
 
 ```{r}
@@ -395,8 +386,6 @@ keggresidsdown
 ```
 ```{r}
 pathview(gene.data=foldchanges, pathway.id=keggresidsup, species="hsa")
-
-
 ```
 
 ```{r}
