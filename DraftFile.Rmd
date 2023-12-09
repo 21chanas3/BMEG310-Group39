@@ -86,7 +86,7 @@ plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRU
 oncoplot(maf = laml, top = 20)
 ```
 
-## Filter Silent and Missense and Regenerate MAF Summary
+## Filter for high impact and Regenerate MAF Summary
 ```{r}
 mutation_filtered <- subset(mutation_intersect, Variant_Classification != "Silent")
 mutation_filtered <- subset(mutation_filtered,IMPACT =="HIGH")
