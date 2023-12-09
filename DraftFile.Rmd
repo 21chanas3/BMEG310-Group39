@@ -373,7 +373,7 @@ head(foldchanges)
 
 ```{r}
 keggres = gage(foldchanges, gsets=kegg.sets.hs)
-attributes(keggres)
+lapply(keggres,head)
 
 ## Focus on top 10 upregulated and downregulated pathways
 keggrespathwaysup <- rownames(keggres$greater)[1:10]
@@ -390,5 +390,8 @@ pathview(gene.data=foldchanges, pathway.id=keggresidsup, species="hsa")
 
 ```{r}
 pathview(gene.data=foldchanges, pathway.id=keggresidsdown, species="hsa")
+```
+```{r}
+pathview(gene.data=foldchanges, pathway.id="hsa04110", species="hsa")
 ```
 
